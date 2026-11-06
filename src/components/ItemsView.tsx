@@ -16,7 +16,17 @@ const total = (i: Item) => i.stock.reduce((s, r) => s + r.quantity, 0);
 export default function ItemsView({ items, setItems, companies, reload }: Props) {
   const supabase = getSupabase()!;
   const [q, setQ] = useState("");
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [adding, setAdding] = useState(false);
+
+  function toggle(id: string) {
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [linkFor, setLinkFor] = useState<Item | null>(null);
   const [editStock, setEditStock] = useState<{ item: Item; row: StockRow } | null>(null);
@@ -74,15 +84,38 @@ export default function ItemsView({ items, setItems, companies, reload }: Props)
         <ul className="space-y-3">
           {filtered.map((item) => {
             const t = total(item);
+            const s = q.trim().toLowerCase();
+            const companyMatch =
+              !!s && item.stock.some((r) => r.companies?.name.toLowerCase().includes(s));
+            const isOpen = openIds.has(item.id) || companyMatch;
             return (
               <li key={item.id} className="rounded-2xl bg-white shadow-sm">
-                <div className="flex items-center gap-2 border-b border-slate-100 p-4 pb-3">
+                <div
+                  className={`flex items-center gap-2 p-4 ${
+                    isOpen ? "border-b border-slate-100 pb-3" : ""
+                  }`}
+                >
                   <button
-                    className="min-w-0 flex-1 text-left"
-                    onClick={() => setEditItem(item)}
-                    title="Edit item"
+                    className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                    onClick={() => toggle(item.id)}
+                    aria-expanded={isOpen}
                   >
-                    <p className="truncate text-base font-semibold">{item.name}</p>
+                    <span
+                      className={`shrink-0 text-lg text-slate-400 transition ${
+                        isOpen ? "rotate-90" : ""
+                      }`}
+                    >
+                      ›
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-base font-semibold">
+                        {item.name}
+                      </span>
+                      <span className="block text-xs text-slate-500">
+                        {item.stock.length}{" "}
+                        {item.stock.length === 1 ? "company" : "companies"}
+                      </span>
+                    </span>
                   </button>
                   <span
                     className={`shrink-0 rounded-full px-3 py-1 text-sm font-bold ${
@@ -100,6 +133,7 @@ export default function ItemsView({ items, setItems, companies, reload }: Props)
                   </button>
                 </div>
 
+                {isOpen && (<>
                 <ul className="divide-y divide-slate-100 px-4">
                   {item.stock.map((row) => (
                     <li key={row.id} className="flex items-center gap-2 py-2.5">
@@ -139,6 +173,7 @@ export default function ItemsView({ items, setItems, companies, reload }: Props)
                 >
                   + Add company
                 </button>
+                </>)}
               </li>
             );
           })}
