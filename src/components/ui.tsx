@@ -28,7 +28,7 @@ export function Sheet({
         className="absolute inset-0 bg-black/40"
         onClick={onClose}
       />
-      <div className="pb-safe relative w-full max-w-md rounded-t-3xl bg-white p-5 shadow-xl sm:rounded-3xl">
+      <div className="pb-safe relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white p-5 shadow-xl sm:rounded-3xl">
         <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-slate-200 sm:hidden" />
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">{title}</h2>

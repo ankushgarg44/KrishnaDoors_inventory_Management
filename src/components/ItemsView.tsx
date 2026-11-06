@@ -16,7 +16,6 @@ const total = (i: Item) => i.stock.reduce((s, r) => s + r.quantity, 0);
 export default function ItemsView({ items, setItems, companies, reload }: Props) {
   const supabase = getSupabase()!;
   const [q, setQ] = useState("");
-  const [open, setOpen] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [linkFor, setLinkFor] = useState<Item | null>(null);
@@ -74,80 +73,72 @@ export default function ItemsView({ items, setItems, companies, reload }: Props)
       ) : (
         <ul className="space-y-3">
           {filtered.map((item) => {
-            const isOpen = open === item.id;
             const t = total(item);
             return (
-              <li key={item.id} className="overflow-hidden rounded-2xl bg-white shadow-sm">
-                <button
-                  className="flex w-full items-center gap-3 p-4 text-left active:bg-slate-50"
-                  onClick={() => setOpen(isOpen ? null : item.id)}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{item.name}</p>
-                    <p className="text-sm text-slate-500">
-                      {item.stock.length}{" "}
-                      {item.stock.length === 1 ? "company" : "companies"}
-                    </p>
-                  </div>
+              <li key={item.id} className="rounded-2xl bg-white shadow-sm">
+                <div className="flex items-center gap-2 border-b border-slate-100 p-4 pb-3">
+                  <button
+                    className="min-w-0 flex-1 text-left"
+                    onClick={() => setEditItem(item)}
+                    title="Edit item"
+                  >
+                    <p className="truncate text-base font-semibold">{item.name}</p>
+                  </button>
                   <span
-                    className={`rounded-full px-3 py-1 text-sm font-bold ${
+                    className={`shrink-0 rounded-full px-3 py-1 text-sm font-bold ${
                       t === 0 ? "bg-red-50 text-red-600" : "bg-slate-100"
                     }`}
                   >
-                    {t}
+                    Total {t}
                   </span>
-                  <span className={`text-slate-400 transition ${isOpen ? "rotate-90" : ""}`}>›</span>
-                </button>
+                  <button
+                    aria-label="Edit item"
+                    className="shrink-0 rounded-lg px-2 py-1 text-slate-400 active:bg-slate-100"
+                    onClick={() => setEditItem(item)}
+                  >
+                    ✎
+                  </button>
+                </div>
 
-                {isOpen && (
-                  <div className="border-t border-slate-100 px-4 pb-4">
-                    {item.stock.length === 0 && (
-                      <p className="py-3 text-sm text-slate-500">
-                        No companies linked yet.
+                <ul className="divide-y divide-slate-100 px-4">
+                  {item.stock.map((row) => (
+                    <li key={row.id} className="flex items-center gap-2 py-2.5">
+                      <p className="min-w-0 flex-1 truncate text-slate-700">
+                        {row.companies?.name ?? "—"}
                       </p>
-                    )}
-                    <ul className="divide-y divide-slate-100">
-                      {item.stock.map((row) => (
-                        <li key={row.id} className="flex items-center gap-2 py-3">
-                          <p className="min-w-0 flex-1 truncate">
-                            {row.companies?.name ?? "—"}
-                          </p>
-                          <button
-                            aria-label="Decrease"
-                            className="h-11 w-11 rounded-xl bg-slate-100 text-xl font-bold active:bg-slate-200 disabled:opacity-40"
-                            disabled={row.quantity === 0}
-                            onClick={() => bump(row, -1)}
-                          >
-                            −
-                          </button>
-                          <button
-                            className={`h-11 min-w-14 rounded-xl px-2 text-lg font-bold tabular-nums active:bg-slate-100 ${
-                              row.quantity === 0 ? "text-red-600" : ""
-                            }`}
-                            onClick={() => setEditStock({ item, row })}
-                          >
-                            {row.quantity}
-                          </button>
-                          <button
-                            aria-label="Increase"
-                            className="h-11 w-11 rounded-xl bg-slate-900 text-xl font-bold text-white active:bg-slate-700"
-                            onClick={() => bump(row, 1)}
-                          >
-                            +
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <Button variant="secondary" onClick={() => setLinkFor(item)}>
-                        + Company
-                      </Button>
-                      <Button variant="secondary" onClick={() => setEditItem(item)}>
-                        Edit item
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                      <button
+                        aria-label={`Decrease ${row.companies?.name}`}
+                        className="h-10 w-10 rounded-xl bg-slate-100 text-xl font-bold active:bg-slate-200 disabled:opacity-40"
+                        disabled={row.quantity === 0}
+                        onClick={() => bump(row, -1)}
+                      >
+                        −
+                      </button>
+                      <button
+                        className={`h-10 min-w-12 rounded-xl px-2 text-lg font-bold tabular-nums active:bg-slate-100 ${
+                          row.quantity === 0 ? "text-red-600" : ""
+                        }`}
+                        onClick={() => setEditStock({ item, row })}
+                      >
+                        {row.quantity}
+                      </button>
+                      <button
+                        aria-label={`Increase ${row.companies?.name}`}
+                        className="h-10 w-10 rounded-xl bg-slate-900 text-xl font-bold text-white active:bg-slate-700"
+                        onClick={() => bump(row, 1)}
+                      >
+                        +
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  className="w-full rounded-b-2xl border-t border-slate-100 py-3 text-sm font-medium text-slate-600 active:bg-slate-50"
+                  onClick={() => setLinkFor(item)}
+                >
+                  + Add company
+                </button>
               </li>
             );
           })}
@@ -157,45 +148,44 @@ export default function ItemsView({ items, setItems, companies, reload }: Props)
       <button
         aria-label="Add item"
         onClick={() => setAdding(true)}
-        className="fixed bottom-24 right-[max(1rem,calc(50%-14rem+1rem))] z-20 flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-3xl text-white shadow-lg active:scale-95"
+        className="pb-safe fixed bottom-6 right-[max(1rem,calc(50%-14rem+1rem))] z-20 flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-3xl text-white shadow-lg active:scale-95"
       >
         +
       </button>
 
+      <datalist id="company-names">
+        {companies.map((c) => (
+          <option key={c.id} value={c.name} />
+        ))}
+      </datalist>
+
       <AddItemSheet
         open={adding}
         onClose={() => setAdding(false)}
-        companies={companies}
-        onDone={async (id) => {
+        onDone={() => {
           setAdding(false);
-          await reload();
-          setOpen(id);
+          reload();
         }}
       />
       <EditItemSheet item={editItem} onClose={() => setEditItem(null)} reload={reload} />
-      <LinkCompanySheet
-        item={linkFor}
-        companies={companies}
-        onClose={() => setLinkFor(null)}
-        reload={reload}
-      />
+      <LinkCompanySheet item={linkFor} onClose={() => setLinkFor(null)} reload={reload} />
       <StockSheet target={editStock} onClose={() => setEditStock(null)} reload={reload} />
     </>
   );
 }
 
-/** Pick an existing company or type a new one. Returns its id. */
-async function resolveCompany(companyId: string, newName: string) {
+/** Find a company by name (case-insensitive) or create it. Returns its id. */
+async function companyId(rawName: string) {
   const supabase = getSupabase()!;
-  if (companyId !== "__new") return companyId;
-  const name = newName.trim();
-  if (!name) throw new Error("Enter a company name");
-  const { data: found } = await supabase
+  const name = rawName.trim().replace(/\s+/g, " ");
+  const pattern = name.replace(/[\\%_]/g, (c) => "\\" + c);
+  const { data: found, error: e1 } = await supabase
     .from("companies")
     .select("id")
-    .ilike("name", name)
-    .maybeSingle();
-  if (found) return found.id as string;
+    .ilike("name", pattern)
+    .limit(1);
+  if (e1) throw e1;
+  if (found && found.length) return found[0].id as string;
   const { data, error } = await supabase
     .from("companies")
     .insert({ name })
@@ -205,76 +195,40 @@ async function resolveCompany(companyId: string, newName: string) {
   return data.id as string;
 }
 
-function CompanyPicker({
-  companies,
-  value,
-  onChange,
-  newName,
-  onNewName,
-}: {
-  companies: Company[];
-  value: string;
-  onChange: (v: string) => void;
-  newName: string;
-  onNewName: (v: string) => void;
-}) {
-  return (
-    <>
-      <Field label="Company">
-        <select className={inputCls} value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="">— None —</option>
-          {companies.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-          <option value="__new">+ New company…</option>
-        </select>
-      </Field>
-      {value === "__new" && (
-        <Field label="New company name">
-          <input
-            className={inputCls}
-            value={newName}
-            onChange={(e) => onNewName(e.target.value)}
-            autoFocus
-          />
-        </Field>
-      )}
-    </>
-  );
-}
+type Line = { company: string; qty: string };
+const blankLine = (): Line => ({ company: "", qty: "" });
 
 function AddItemSheet({
   open,
   onClose,
-  companies,
   onDone,
 }: {
   open: boolean;
   onClose: () => void;
-  companies: Company[];
-  onDone: (id: string) => void;
+  onDone: () => void;
 }) {
   const supabase = getSupabase()!;
   const [name, setName] = useState("");
-  const [companyId, setCompanyId] = useState("");
-  const [newCompany, setNewCompany] = useState("");
-  const [qty, setQty] = useState("0");
+  const [lines, setLines] = useState<Line[]>([blankLine()]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  function close() {
+  function reset() {
     setName("");
-    setCompanyId("");
-    setNewCompany("");
-    setQty("0");
+    setLines([blankLine()]);
     setErr(null);
-    onClose();
+  }
+
+  function setLine(i: number, patch: Partial<Line>) {
+    setLines((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)));
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const filled = lines.filter((l) => l.company.trim());
+    const names = filled.map((l) => l.company.trim().toLowerCase());
+    if (new Set(names).size !== names.length)
+      return setErr("The same company is listed twice.");
     setBusy(true);
     setErr(null);
     try {
@@ -284,18 +238,17 @@ function AddItemSheet({
         .select("id")
         .single();
       if (error) throw error;
-      if (companyId) {
-        const cid = await resolveCompany(companyId, newCompany);
+      for (const l of filled) {
+        const cid = await companyId(l.company);
         const { error: e2 } = await supabase.from("stock").insert({
           item_id: data.id,
           company_id: cid,
-          quantity: Math.max(0, parseInt(qty) || 0),
+          quantity: Math.max(0, parseInt(l.qty) || 0),
         });
         if (e2) throw e2;
       }
-      const id = data.id as string;
-      close();
-      onDone(id);
+      reset();
+      onDone();
     } catch (e) {
       setErr(friendly(e));
     } finally {
@@ -304,7 +257,14 @@ function AddItemSheet({
   }
 
   return (
-    <Sheet open={open} title="New item" onClose={close}>
+    <Sheet
+      open={open}
+      title="New item"
+      onClose={() => {
+        reset();
+        onClose();
+      }}
+    >
       <form onSubmit={submit}>
         <Field label="Item name">
           <input
@@ -315,28 +275,55 @@ function AddItemSheet({
             onChange={(e) => setName(e.target.value)}
           />
         </Field>
-        <CompanyPicker
-          companies={companies}
-          value={companyId}
-          onChange={setCompanyId}
-          newName={newCompany}
-          onNewName={setNewCompany}
-        />
-        {companyId && (
-          <Field label="Starting quantity">
-            <input
-              className={inputCls}
-              type="number"
-              inputMode="numeric"
-              min={0}
-              value={qty}
-              onChange={(e) => setQty(e.target.value)}
-            />
-          </Field>
-        )}
+
+        <p className="mb-1 text-sm font-medium text-slate-600">Companies & quantity</p>
+        <div className="mb-2 space-y-2">
+          {lines.map((l, i) => (
+            <div key={i} className="flex gap-2">
+              <div className="min-w-0 flex-1">
+                <input
+                  className={inputCls}
+                  placeholder="Company"
+                  list="company-names"
+                  value={l.company}
+                  onChange={(e) => setLine(i, { company: e.target.value })}
+                />
+              </div>
+              <div className="w-20 shrink-0">
+              <input
+                className={`${inputCls} text-center`}
+                placeholder="Qty"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={l.qty}
+                onChange={(e) => setLine(i, { qty: e.target.value })}
+              />
+              </div>
+              {lines.length > 1 && (
+                <button
+                  type="button"
+                  aria-label="Remove company row"
+                  className="w-10 shrink-0 rounded-xl text-xl text-slate-400 active:bg-slate-100"
+                  onClick={() => setLines((ls) => ls.filter((_, j) => j !== i))}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="mb-4 text-sm font-medium text-slate-600"
+          onClick={() => setLines((ls) => [...ls, blankLine()])}
+        >
+          + Another company
+        </button>
+
         {err && <p className="mb-3 text-sm text-red-600">{err}</p>}
         <Button type="submit" disabled={busy || !name.trim()}>
-          Add item
+          {busy ? "Saving…" : "Add item"}
         </Button>
       </form>
     </Sheet>
@@ -364,6 +351,11 @@ function EditItemSheet({
     setErr(null);
   }
 
+  function close() {
+    setLastId(null);
+    onClose();
+  }
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!item) return;
@@ -374,8 +366,7 @@ function EditItemSheet({
       .eq("id", item.id);
     setBusy(false);
     if (error) return setErr(friendly(error));
-    onClose();
-    setLastId(null);
+    close();
     reload();
   }
 
@@ -385,20 +376,12 @@ function EditItemSheet({
     const { error } = await supabase.from("items").delete().eq("id", item.id);
     setBusy(false);
     if (error) return setErr(friendly(error));
-    onClose();
-    setLastId(null);
+    close();
     reload();
   }
 
   return (
-    <Sheet
-      open={!!item}
-      title="Edit item"
-      onClose={() => {
-        onClose();
-        setLastId(null);
-      }}
-    >
+    <Sheet open={!!item} title="Edit item" onClose={close}>
       <form onSubmit={save}>
         <Field label="Item name">
           <input
@@ -422,41 +405,36 @@ function EditItemSheet({
 
 function LinkCompanySheet({
   item,
-  companies,
   onClose,
   reload,
 }: {
   item: Item | null;
-  companies: Company[];
   onClose: () => void;
   reload: () => Promise<void>;
 }) {
   const supabase = getSupabase()!;
-  const [companyId, setCompanyId] = useState("");
-  const [newCompany, setNewCompany] = useState("");
-  const [qty, setQty] = useState("0");
+  const [company, setCompany] = useState("");
+  const [qty, setQty] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const available = item
-    ? companies.filter((c) => !item.stock.some((r) => r.company_id === c.id))
-    : [];
-
   function close() {
-    setCompanyId("");
-    setNewCompany("");
-    setQty("0");
+    setCompany("");
+    setQty("");
     setErr(null);
     onClose();
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!item || !companyId) return;
+    if (!item) return;
+    const n = company.trim().toLowerCase();
+    if (item.stock.some((r) => r.companies?.name.toLowerCase() === n))
+      return setErr(`${company.trim()} is already on this item.`);
     setBusy(true);
     setErr(null);
     try {
-      const cid = await resolveCompany(companyId, newCompany);
+      const cid = await companyId(company);
       const { error } = await supabase.from("stock").insert({
         item_id: item.id,
         company_id: cid,
@@ -473,27 +451,31 @@ function LinkCompanySheet({
   }
 
   return (
-    <Sheet open={!!item} title={`Add company to ${item?.name ?? ""}`} onClose={close}>
+    <Sheet open={!!item} title={`Add company · ${item?.name ?? ""}`} onClose={close}>
       <form onSubmit={submit}>
-        <CompanyPicker
-          companies={available}
-          value={companyId}
-          onChange={setCompanyId}
-          newName={newCompany}
-          onNewName={setNewCompany}
-        />
+        <Field label="Company">
+          <input
+            className={inputCls}
+            required
+            autoFocus
+            list="company-names"
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
+          />
+        </Field>
         <Field label="Quantity">
           <input
             className={inputCls}
             type="number"
             inputMode="numeric"
             min={0}
+            placeholder="0"
             value={qty}
             onChange={(e) => setQty(e.target.value)}
           />
         </Field>
         {err && <p className="mb-3 text-sm text-red-600">{err}</p>}
-        <Button type="submit" disabled={busy || !companyId}>
+        <Button type="submit" disabled={busy || !company.trim()}>
           Add
         </Button>
       </form>
@@ -602,7 +584,7 @@ function StockSheet({
   );
 }
 
-export function friendly(e: unknown): string {
+function friendly(e: unknown): string {
   const err = e as { code?: string; message?: string };
   if (err?.code === "23505") return "That name already exists.";
   return err?.message ?? "Something went wrong";

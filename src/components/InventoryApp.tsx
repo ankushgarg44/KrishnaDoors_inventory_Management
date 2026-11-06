@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { getSupabase, type Company, type Item } from "@/lib/supabase";
 import ItemsView from "./ItemsView";
-import CompaniesView from "./CompaniesView";
 
 export default function InventoryApp() {
   if (!getSupabase()) return <SetupNotice />;
@@ -24,7 +23,6 @@ function SetupNotice() {
 
 function Main() {
   const supabase = getSupabase()!;
-  const [tab, setTab] = useState<"items" | "companies">("items");
   const [items, setItems] = useState<Item[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,36 +75,15 @@ function Main() {
         )}
         {loading ? (
           <p className="py-10 text-center text-slate-400">Loading…</p>
-        ) : tab === "items" ? (
+        ) : (
           <ItemsView
             items={items}
             setItems={setItems}
             companies={companies}
             reload={reload}
           />
-        ) : (
-          <CompaniesView companies={companies} items={items} reload={reload} />
         )}
       </main>
-
-      <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white">
-        <div className="mx-auto grid max-w-md grid-cols-2">
-          {(["items", "companies"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex flex-col items-center gap-0.5 py-3 text-xs font-medium ${
-                tab === t ? "text-slate-900" : "text-slate-400"
-              }`}
-            >
-              <span className="text-xl leading-none">
-                {t === "items" ? "▦" : "⌂"}
-              </span>
-              {t === "items" ? "Items" : "Companies"}
-            </button>
-          ))}
-        </div>
-      </nav>
     </div>
   );
 }
