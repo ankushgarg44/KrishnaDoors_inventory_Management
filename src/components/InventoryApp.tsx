@@ -65,7 +65,7 @@ function Main() {
     <div className="mx-auto flex min-h-dvh max-w-md flex-col">
       <header className="sticky top-0 z-30 flex items-center bg-slate-900 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white">
         <h1 className="text-lg font-bold">
-          {tab === "items" ? "Items" : "Companies"}
+          Krishna Doors
         </h1>
       </header>
 
